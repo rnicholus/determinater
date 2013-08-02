@@ -4,6 +4,10 @@ determinater
 Efficient, flexible, _and_ accurate client-side file identification tool.
 
 
+**Notice**: this is a work in progress and is not yet ready for use.  Once it is functional, 
+I will be sure to version it appropriately.
+
+
 The intent of this library is to identify a [`File`](http://www.w3.org/TR/FileAPI/#dfn-file) or 
 [`Blob`](http://www.w3.org/TR/FileAPI/#dfn-Blob) by looking for "magic numbers" or "magic bytes".
 This can be efficiently accomplished client-side by [slicing](http://www.w3.org/TR/FileAPI/#slide-method-algo) 
@@ -16,5 +20,4 @@ such a filter, [web workers](http://www.w3.org/TR/workers/) can be utilized wher
 matching does not tie up the UI thread.
 
 
-**Notice**: this is a work in progress and is not yet ready for use.  Once it is functional, 
-I will be sure to version it appropriately.
+This library is MIT licensed.  See the [license file](LICENSE) for specifics.
