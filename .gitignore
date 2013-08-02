@@ -1,3 +1,4 @@
 .idea/*
 determinater.iml
 node_modules/*
+bin/*
