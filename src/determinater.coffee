@@ -1,5 +1,3 @@
-root = this
-
 determinater = {}
 
 if exports
@@ -7,7 +5,7 @@ if exports
         exports = module.exports = determinater
     exports.determinater = determinater
 else
-    root.determinater = determinater
+    this.determinater = determinater
 
 determinater.determine = (fileOrBlob, possibleMimeTypes) ->
     console.log 'TODO'
