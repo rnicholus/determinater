@@ -3,6 +3,7 @@ determinater
 
 Efficient, flexible, _and_ accurate client-side file identification tool.
 
+ [![Semver badge](http://calm-shore-6115.herokuapp.com/?label=SemVer&value=2.0.0&color=green)](http://semver.org/spec/v2.0.0.html)
 
 **Notice**: this is a work in progress and is not yet ready for use.  Once it is functional, 
 I will be sure to version it appropriately.
