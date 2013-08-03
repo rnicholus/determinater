@@ -8,6 +8,8 @@ Efficient, flexible, _and_ accurate client-side file identification tool.
 I will be sure to version it appropriately.
 
 
+<br/>
+#### Summary
 The intent of this library is to identify a [`File`](http://www.w3.org/TR/FileAPI/#dfn-file) or 
 [`Blob`](http://www.w3.org/TR/FileAPI/#dfn-Blob) by looking for "magic numbers" or "magic bytes".
 This can be efficiently accomplished client-side by [slicing](http://www.w3.org/TR/FileAPI/#slide-method-algo) 
@@ -20,4 +22,17 @@ such a filter, [web workers](http://www.w3.org/TR/workers/) can be utilized wher
 matching does not tie up the UI thread.
 
 
+<br/>
+#### Supported Browsers (planned)
+* IE10+
+* Firefox
+* Chrome
+* Safari 6
+* Opera 11.1
+* iOS 6+ (Safari, Chrome, and Firefox)
+* Blackberry 10
+* Android 4+ (Chrome & Firefox)
+
+<br/>
+#### License
 This library is MIT licensed.  See the [license file](LICENSE) for specifics.
