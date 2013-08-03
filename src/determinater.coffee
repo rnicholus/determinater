@@ -40,7 +40,7 @@ loadSignatures = ->
             determinater.signatures = JSON.parse xhr.responseText
             console.log "Signatures loaded."
         else
-            console.error "#{xhr.status} status returned by signature server."
+            console.error "#{xhr.status} status returned by signature server!"
 
     xhr.send()
 
