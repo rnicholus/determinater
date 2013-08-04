@@ -27,7 +27,7 @@ matching does not tie up the UI thread.
 * Firefox
 * Chrome
 * Safari 6+
-* Opera 11.1
+* Opera 11.1+
 * iOS 6+ (Safari, Chrome, and Firefox)
 * Blackberry 10
 * Android 4+ (Chrome & Firefox)
