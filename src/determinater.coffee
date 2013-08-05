@@ -16,13 +16,21 @@ determinater = {}
 ###
 signaturesUrl = "https://dl.dropboxusercontent.com/u/199054115/signatures.json"
 
+###
+    The minimum number of bytes from offset 0 that need to be examined
+    in order to properly identify any file.
+    TODO Programmatically determine this after signatures have been loaded.
+###
+minimumBytesToExamine = 16
+
 # AMD Support, with a fallback that adds a `determinater` property to the global namespace.
 if exports
-    if module && module.exports
+    if module? and module.exports?
         exports = module.exports = determinater
-    exports.determinater = determinater
+    else
+        exports.determinater = determinater
 else
-    this.determinater = determinater
+    @determinater = determinater
 
 ###
     Grab the signatures JSON file from the CDN, parse it, and
@@ -36,7 +44,7 @@ loadSignatures = ->
     xhr.open "GET", signaturesUrl
 
     xhr.onload = ->
-        if xhr.status == 200
+        if xhr.status is 200
             determinater.signatures = JSON.parse xhr.responseText
             console.log "Signatures loaded."
         else
@@ -48,10 +56,119 @@ loadSignatures = ->
 if !determinater.signatures then loadSignatures()
 
 ###
-    Identify a `File` or `Blob`, optionally passing in an array of
-    exclusive extensions.  If such an array is included, determinater
-    will only consider these file types when attempting to identify
-    the file.
+    Identify one or more `Files` or `Blobs`, optionally passing in an array of
+    exclusive extensions or MIME types.  If such an array is included,
+    determinater will only consider these file types when attempting
+    to identify the file(s).
+
+    This will return a promise since the work required to fulfill this request
+    will be handled in one or more asynchronous calls.
 ###
-determinater.determine = (fileOrBlob, possibleExtensions) ->
-    console.log "TODO"
+determinater.determine = (filesOrBlobs, possibleExtensionsOrMimeTypes) ->
+    promise = new Promise
+    identifiable = []
+    unidentifiable = []
+
+
+    ###
+        Sets the `determinedType` property of the File or Blob
+        to match the determined MIME type.  This also decrements
+        the number of determinations left and possibly calls the
+        success function on the promise if we have no determinations
+        left to make.  The success function will be passed all
+        Files or Blobs that were properly identified.
+    ###
+    handleDeterminedType = (fileOrBlob, determinedType) ->
+        #TODO
+
+    ###
+        Called when we cannot determine a File or Blob's type.
+        Possibly calls the success function on the promise
+        if we have no determinations left to make.  The failure
+        function will be passed all Files or Blobs that were
+        unidentifiable.
+    ###
+    handleTypeDeterminationFailure = (fileOrBlob) ->
+        #TODO
+
+    filesOrBlobs.forEach (fileOrBlob) ->
+        after(sliceFile(fileOrBlob, possibleExtensionsOrMimeTypes), getBytesAsString)
+            .then (firstBytes) ->
+                determineType(firstBytes, possibleExtensionsOrMimeTypes)
+                    .then (determinedType) ->
+                        handleDeterminedType fileOrBlob, determinedType,
+                        -> handleTypeDeterminationFailure fileOrBlob
+
+    return promise
+
+
+###
+    Slice the minimum number of bytes off the the file required
+    to properly identify it.  Return the resulting Blob.
+###
+sliceFile = (fileOrBlob) ->
+    #TODO
+
+###
+    Get a hex string that represents all bytes associated with
+    the passed Blob.  This returns a promise since this is an async
+    operation.  When the promise is fulfilled, the bytes as a string
+    will be passed into the success callback.
+###
+getBytesAsString = (blob) ->
+    #TODO
+
+###
+    Determine what type of file is associated with the
+    hex string.  This returns a promise as this is an
+    async operation.  When the promise is fulfilled,
+    a MIME value identifying the file will be returned.
+    If the file cannot be identified, the failure callback
+    will be invoked.
+###
+determineType = (hexString, filterByExtsOrMimes) ->
+    #TODO
+
+###
+    Simple helper that allows us to add some advice
+    after a function has been invoked.  The result of
+    the advisement is returned.
+###
+after = (func, advice) ->
+    ->
+        result = func.apply @, arguments
+        advice.call @, result
+
+###
+    Simple promise pattern implementation.
+###
+class Promise
+    successCallbacks = []
+    failureCallbacks = []
+    status = null
+    doneArgs = null
+
+    success: ->
+        status = "success"
+        doneArgs = arguments
+        callback.apply null, arguments for callback in successCallbacks
+        return @
+
+    failure: ->
+        status = "failure"
+        doneArgs = arguments
+        callback.apply null, arguments for callback in failureCallbacks
+        return @
+
+    then: (successCallback, failureCallback) ->
+        if status is "success"
+            successCallback.apply null, doneArgs
+        else
+            successCallbacks.push successCallback
+
+        if status is "failure"
+            failureCallback.apply null, doneArgs
+        else
+            failureCallbacks.push failureCallback
+
+        return @
