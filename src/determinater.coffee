@@ -92,12 +92,11 @@ determinater.determine = (filesOrBlobs, possibleExtensionsOrMimeTypes) ->
         #TODO
 
     filesOrBlobs.forEach (fileOrBlob) ->
-        after(sliceFile(fileOrBlob, possibleExtensionsOrMimeTypes), getBytesAsString)
-            .then (firstBytes) ->
-                determineType(firstBytes, possibleExtensionsOrMimeTypes)
-                    .then (determinedType) ->
-                        handleDeterminedType fileOrBlob, determinedType,
-                        -> handleTypeDeterminationFailure fileOrBlob
+        slice = sliceFile fileOrBlob, possibleExtensionsOrMimeTypes
+        getBytesAsString(slice).then (firstBytes) ->
+            determineType(firstBytes, possibleExtensionsOrMimeTypes)
+                .then (determinedType) -> handleDeterminedType fileOrBlob, determinedType,
+            () -> handleTypeDeterminationFailure fileOrBlob
 
     return promise
 
@@ -131,14 +130,22 @@ determineType = (hexString, filterByExtsOrMimes) ->
 
 ###
     Simple helper that allows us to add some advice
-    after a function has been invoked.  The result of
-    the advisement is returned.
+    after a function has been invoked.
 ###
 after = (func, advice) ->
     ->
         result = func.apply @, arguments
         advice.call @, result
+        return result
 
+###
+    Simple helper function that allows us to add some advice
+    before a function is invoked.
+###
+before = (func, advice) ->
+    ->
+        advice.apply @, arguments
+        func.apply @, arguments
 ###
     Simple promise pattern implementation.
 ###
