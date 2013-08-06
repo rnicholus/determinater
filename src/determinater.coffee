@@ -100,9 +100,9 @@ determinater.determine = (filesOrBlobs, possibleExtensionsOrMimeTypes) ->
         else if examined == filesOrBlobs.length
             determinations.success filesOrBlobs
 
-
+    # Iterate through all passed items and attempt to identify them
     filesOrBlobs.forEach (fileOrBlob) ->
-        slice = sliceFile fileOrBlob, possibleExtensionsOrMimeTypes
+        slice = sliceFile fileOrBlob
         getBytesAsString(slice).then (firstBytes) ->
             determineType(firstBytes, possibleExtensionsOrMimeTypes)
                 .then (determinedType) -> handleDeterminedType fileOrBlob, determinedType,
@@ -116,7 +116,10 @@ determinater.determine = (filesOrBlobs, possibleExtensionsOrMimeTypes) ->
     to properly identify it.  Return the resulting Blob.
 ###
 sliceFile = (fileOrBlob) ->
-    #TODO
+    # the slice method had vendor-specific prefixes until FF 13 & Chrome 21
+    slicer = fileOrBlob.slice or fileOrBlob.mozSlice or fileOrBlob.webkitSlice
+
+    slicer.call fileOrBlob, 0, minimumBytesToExamine
 
 ###
     Get a hex string that represents all bytes associated with
