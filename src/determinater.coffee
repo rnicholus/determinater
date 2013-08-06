@@ -128,7 +128,24 @@ sliceFile = (fileOrBlob) ->
     will be passed into the success callback.
 ###
 getBytesAsString = (blob) ->
-    #TODO
+    byteParser = new Promise
+    reader = new FileReader
+
+    reader.onload = ->
+        bytesAsHex = ""
+        blobBytes = reader.result
+
+        for byteInBlob in blobBytes
+            blobByte = byteInBlob.charCodeAt 0
+            byteAsHexStr = blobByte.toString 16
+            if byteAsHexStr.length < 2 then byteAsHexStr = "0#{byteAsHexStr}"
+            bytesAsHex += byteAsHexStr
+
+        byteParser.success bytesAsHex
+
+    reader.readAsBinaryString blob
+
+    return byteParser
 
 ###
     Determine what type of file is associated with the
@@ -140,6 +157,7 @@ getBytesAsString = (blob) ->
 ###
 determineType = (hexString, filterByExtsOrMimes) ->
     #TODO
+    console.log hexString
 
 ###
     Simple helper that allows us to add some advice
