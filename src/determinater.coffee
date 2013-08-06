@@ -65,9 +65,9 @@ if !determinater.signatures then loadSignatures()
     will be handled in one or more asynchronous calls.
 ###
 determinater.determine = (filesOrBlobs, possibleExtensionsOrMimeTypes) ->
-    promise = new Promise
-    identifiable = []
-    unidentifiable = []
+    determinations = new Promise
+    examined = 0
+    failed = 0
 
 
     ###
@@ -79,17 +79,27 @@ determinater.determine = (filesOrBlobs, possibleExtensionsOrMimeTypes) ->
         Files or Blobs that were properly identified.
     ###
     handleDeterminedType = (fileOrBlob, determinedType) ->
-        #TODO
+        examined++
+
+        if examined == filesOrBlobs.length
+            determinations.success filesOrBlobs
 
     ###
-        Called when we cannot determine a File or Blob's type.
-        Possibly calls the success function on the promise
-        if we have no determinations left to make.  The failure
-        function will be passed all Files or Blobs that were
-        unidentifiable.
+        Called when we cannot identify one or more files due to some unexpected error.
+        If all files fail to be identified due to an unexpected error, we will invoke the
+        failure callback.
     ###
-    handleTypeDeterminationFailure = (fileOrBlob) ->
-        #TODO
+    handleTypeDeterminationFailure = (fileOrBlob, failureReason) ->
+        examined++
+        failed++
+
+        if failureReason? then console.log failureReason else "Unexpected error during determination!"
+
+        if failed == filesOrBlobs.length
+            determinations.failure filesOrBlobs
+        else if examined == filesOrBlobs.length
+            determinations.success filesOrBlobs
+
 
     filesOrBlobs.forEach (fileOrBlob) ->
         slice = sliceFile fileOrBlob, possibleExtensionsOrMimeTypes
@@ -98,7 +108,7 @@ determinater.determine = (filesOrBlobs, possibleExtensionsOrMimeTypes) ->
                 .then (determinedType) -> handleDeterminedType fileOrBlob, determinedType,
             () -> handleTypeDeterminationFailure fileOrBlob
 
-    return promise
+    return determinations
 
 
 ###
