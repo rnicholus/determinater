@@ -46,6 +46,8 @@ loadSignatures = ->
     xhr.onload = ->
         if xhr.status is 200
             determinater.signatures = JSON.parse xhr.responseText
+            determinater.signaturesVersion = determinater.signatures.version
+            determinater.signatures = determinater.signatures.signatures
             console.log "Signatures loaded."
         else
             console.error "#{xhr.status} status returned by signature server!"
@@ -63,6 +65,8 @@ if !determinater.signatures then loadSignatures()
 
     This will return a promise since the work required to fulfill this request
     will be handled in one or more asynchronous calls.
+
+    TODO Allow one File/Blob or an array or a FileList
 ###
 determinater.determine = (filesOrBlobs, possibleExtensionsOrMimeTypes) ->
     determinations = new Promise
@@ -80,6 +84,7 @@ determinater.determine = (filesOrBlobs, possibleExtensionsOrMimeTypes) ->
     ###
     handleDeterminedType = (fileOrBlob, determinedType) ->
         examined++
+        fileOrBlob.determinedType = determinedType
 
         if examined == filesOrBlobs.length
             determinations.success filesOrBlobs
@@ -149,15 +154,29 @@ getBytesAsString = (blob) ->
 
 ###
     Determine what type of file is associated with the
-    hex string.  This returns a promise as this is an
+    hex string.  This returns a promise as this may be an
     async operation.  When the promise is fulfilled,
     a MIME value identifying the file will be returned.
     If the file cannot be identified, the failure callback
     will be invoked.
+
+    TODO Handle types with non-unique magic byte sequences
+    TODO Take filter param into account
 ###
 determineType = (hexString, filterByExtsOrMimes) ->
-    #TODO
-    console.log hexString
+    typeDetermination = new Promise
+    type = null
+
+    for signature in determinater.signatures
+        if signature.offset? then offset = signature.offset else offset = 0
+
+        if hexString.toUpperCase().indexOf(signature.sig.toUpperCase()) == offset
+            type = signature.mime
+            break
+
+    if type then typeDetermination.success type else typeDetermination.failure()
+
+    return typeDetermination
 
 ###
     Simple helper that allows us to add some advice
@@ -181,32 +200,33 @@ before = (func, advice) ->
     Simple promise pattern implementation.
 ###
 class Promise
-    successCallbacks = []
-    failureCallbacks = []
-    status = null
-    doneArgs = null
+    constructor: () ->
+        @successCallbacks = []
+        @failureCallbacks = []
+        @status = null
+        @doneArgs = null
 
     success: ->
-        status = "success"
-        doneArgs = arguments
-        callback.apply null, arguments for callback in successCallbacks
+        @status = "success"
+        @doneArgs = arguments
+        callback.apply null, arguments for callback in @successCallbacks
         return @
 
     failure: ->
-        status = "failure"
-        doneArgs = arguments
-        callback.apply null, arguments for callback in failureCallbacks
+        @status = "failure"
+        @doneArgs = arguments
+        callback.apply null, arguments for callback in @failureCallbacks
         return @
 
     then: (successCallback, failureCallback) ->
-        if status is "success"
-            successCallback.apply null, doneArgs
+        if @status is "success"
+            successCallback.apply null, @doneArgs
         else
-            successCallbacks.push successCallback
+            @successCallbacks.push successCallback
 
-        if status is "failure"
-            failureCallback.apply null, doneArgs
+        if @status is "failure"
+            failureCallback.apply null, @doneArgs
         else
-            failureCallbacks.push failureCallback
+            @failureCallbacks.push failureCallback
 
         return @
