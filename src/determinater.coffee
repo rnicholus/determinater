@@ -174,7 +174,7 @@ determineType = (hexString, filterByExtsOrMimes) ->
             type = signature.mime
             break
 
-    if type then typeDetermination.success type else typeDetermination.failure()
+    if type? then typeDetermination.success type else typeDetermination.failure()
 
     return typeDetermination
 
