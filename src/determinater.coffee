@@ -59,7 +59,7 @@ if !determinater.signatures then loadSignatures()
 
 ###
     Identify one or more `Files` or `Blobs`, optionally passing in an array of
-    exclusive extensions or MIME types.  If such an array is included,
+    exclusive extensions.  If such an array is included,
     determinater will only consider these file types when attempting
     to identify the file(s).
 
@@ -68,7 +68,7 @@ if !determinater.signatures then loadSignatures()
 
     TODO Allow one File/Blob or an array or a FileList
 ###
-determinater.determine = (filesOrBlobs, possibleExtensionsOrMimeTypes) ->
+determinater.determine = (filesOrBlobs, possibleExtensions) ->
     determinations = new Promise
     examined = 0
     failed = 0
@@ -76,11 +76,11 @@ determinater.determine = (filesOrBlobs, possibleExtensionsOrMimeTypes) ->
 
     ###
         Sets the `determinedType` property of the File or Blob
-        to match the determined MIME type.  This also decrements
-        the number of determinations left and possibly calls the
-        success function on the promise if we have no determinations
-        left to make.  The success function will be passed all
-        Files or Blobs that were properly identified.
+        to the associated [type record](https://github.com/rnicholus/determinater-data/blob/master/signatures/signatures.json).
+        This also decrements the number of determinations left and
+        possibly calls the success function on the promise if we
+        have no determinations left to make.  The success function
+        will be passed all Files or Blobs that were properly identified.
     ###
     handleDeterminedType = (fileOrBlob, determinedType) ->
         examined++
@@ -109,7 +109,7 @@ determinater.determine = (filesOrBlobs, possibleExtensionsOrMimeTypes) ->
     filesOrBlobs.forEach (fileOrBlob) ->
         slice = sliceFile fileOrBlob
         getBytesAsString(slice).then (firstBytes) ->
-            determineType(firstBytes, possibleExtensionsOrMimeTypes)
+            determineType(firstBytes, possibleExtensions)
                 .then (determinedType) -> handleDeterminedType fileOrBlob, determinedType,
             () -> handleTypeDeterminationFailure fileOrBlob
 
@@ -144,9 +144,10 @@ getBytesAsString = (blob) ->
             blobByte = byteInBlob.charCodeAt 0
             byteAsHexStr = blobByte.toString 16
             if byteAsHexStr.length < 2 then byteAsHexStr = "0#{byteAsHexStr}"
-            bytesAsHex += byteAsHexStr
+            bytesAsHex += byteAsHexStr + " "
 
-        byteParser.success bytesAsHex
+        console.log("Initial Bytes: " + bytesAsHex);
+        byteParser.success bytesAsHex.trim()
 
     reader.readAsBinaryString blob
 
@@ -156,14 +157,14 @@ getBytesAsString = (blob) ->
     Determine what type of file is associated with the
     hex string.  This returns a promise as this may be an
     async operation.  When the promise is fulfilled,
-    a MIME value identifying the file will be returned.
+    a signature record identifying the file type will be returned.
     If the file cannot be identified, the failure callback
     will be invoked.
 
     TODO Handle types with non-unique magic byte sequences
     TODO Take filter param into account
 ###
-determineType = (hexString, filterByExtsOrMimes) ->
+determineType = (hexString, filterByExts) ->
     typeDetermination = new Promise
     type = null
 
@@ -171,7 +172,7 @@ determineType = (hexString, filterByExtsOrMimes) ->
         if signature.offset? then offset = signature.offset else offset = 0
 
         if hexString.toUpperCase().indexOf(signature.sig.toUpperCase()) == offset
-            type = signature.mime
+            type = signature
             break
 
     if type? then typeDetermination.success type else typeDetermination.failure()
@@ -220,13 +221,13 @@ class Promise
 
     then: (successCallback, failureCallback) ->
         if @status is "success"
-            successCallback.apply null, @doneArgs
-        else
+            successCallback?.apply null, @doneArgs
+        else if successCallback?
             @successCallbacks.push successCallback
 
         if @status is "failure"
-            failureCallback.apply null, @doneArgs
-        else
+            failureCallback?.apply null, @doneArgs
+        else if failureCallback?
             @failureCallbacks.push failureCallback
 
         return @
